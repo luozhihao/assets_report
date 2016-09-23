@@ -9,9 +9,6 @@ require('es6-promise').polyfill()
 
 const FormItem = Form.Item
 
-// 创建对象时设置初始化信息
-const headers = new Headers()
-
 const data = {
     "area": {"data": [{"data": [5, 2, 4], name: '国内'}], "categories": ['物理机', '云主机', '虚拟机']}, 
     "type": {"data": [{"data": [3, 4, 5], name: '国内'}], "categories": ['物理机', '云主机', '虚拟机']}, 
@@ -30,26 +27,41 @@ class IdcChart extends Component {
         this.state = {
             areaView1: '',
             areaView12: '',
-            areaLists: []
+            areaLists: [],
+            showLevel: false
         }
     }
 
     componentDidMount () {
-        const state = this.props.location.state
+        this.getChart()
 
-        if (state !== null) {
-            this.setState({
-                areaView1: state.area1,
-                areaView12: state.area2
-            })
-        }
-
-        setTimeout(() => {
+        /*setTimeout(() => {
             this.randerChart('serverArea', '台', '台', data.area, 1, '可点击', 'overview')
             this.randerChart('serverType', '台', '台', data.type, 1, '可点击', 'overview')
             this.randerChart('netDevice', '台', '台', data.device, 1, '可点击', 'game')
             this.randerChart('inventory', '台', '台', data.inventory, 1, '可点击', 'mobile')
-        }, 0)
+        }, 0)*/
+    }
+
+    componentWillReceiveProps () {
+        if (this.props.children) {
+            this.getChart()
+        }
+    }
+
+    // 获取图表数据
+    getChart = () => {
+        fetch("/overview/", {
+            method: "POST",
+            credentials: 'include'
+        })
+        .then((res) => { return res.json() })
+        .then((data) => {
+            this.randerChart('serverArea', '台', '台', data.server, 1, '可点击', 'overview')
+            this.randerChart('serverType', '台', '台', data.onoff, 1, '可点击', 'overview')
+            this.randerChart('netDevice', '台', '台', data.netdevice, 1, '可点击', 'overview')
+            this.randerChart('inventory', '台', '台', data.status, 1, '可点击', 'overview')
+        })
     }
 
     // 区域变更
@@ -68,13 +80,13 @@ class IdcChart extends Component {
 
     // 二级图表
     details = type => {
-        let area1 = this.state.areaView1 || 'all',
-            area2 = this.state.areaView12 || 'all',
+        let area1 = this.state.areaView1,
+            area2 = this.state.areaView12,
             url;
         
-        type === '1' ? url = '/ServerChart/' : url = '/ServerType/'
+        type === '1' ? url = '/IdcChart/ServerChart' : url = '/IdcChart/ServerType'
 
-        this.props.history.push(url + area1 + '/' + area2)
+        this.props.history.pushState({area1: area1, area2: area2}, url)
     }
 
     // 显示弹框
@@ -156,68 +168,78 @@ class IdcChart extends Component {
 
         return(
             <div>
-                <Form className="search-form" inline>
-                    <FormItem
-                        label="区域一"
-                    >
-                        <Select 
-                            {...getFieldProps('area1')}
-                            value={this.state.areaView1}
-                            onChange={this.areaChange1}
-                            allowClear
-                            style={{ width: 150 }} 
-                        >
-                            <Option value="国内">国内</Option>
-                            <Option value="海外">海外</Option>
-                        </Select>
-                    </FormItem>
-                    <FormItem
-                        label="区域二"
-                    >
-                        <Select 
-                            {...getFieldProps('area12')}
-                            value={this.state.areaView12}
-                            onChange={this.areaChange12}
-                            allowClear
-                            style={{ width: 150 }} 
-                        >
-                            { 
-                                this.state.areaLists.map((e, i) => 
-                                    <Option value={e} key={i}>{e}</Option>
-                                )
-                            }
-                        </Select>
-                    </FormItem>
-                    <FormItem>
-                        <Button type="primary">查询</Button>
-                    </FormItem>
-                </Form>
-                <div>
-                    <Row gutter="16" style={{marginTop: '16px'}}>
-                        <Col span="12">
-                            <Card title="服务器分布" extra={<Button type="dashed" onClick={this.details.bind(this, '1')}>详细</Button>}>
-                                <div id="serverArea" className="chart-item"></div>
-                            </Card>
-                        </Col>
-                        <Col span="12">
-                            <Card title="服务器上下架" extra={<Button type="dashed" onClick={this.details.bind(this, '2')}>详细</Button>}>
-                                <div id="serverType" className="chart-item"></div>
-                            </Card>
-                        </Col>
-                    </Row>
-                    <Row gutter="16" style={{marginTop: '16px'}}>
-                        <Col span="12">
-                            <Card title="网络设备">
-                                <div id="netDevice" className="chart-item"></div>
-                            </Card>
-                        </Col>
-                        <Col span="12">
-                            <Card title="库存">
-                                <div id="inventory" className="chart-item"></div>
-                            </Card>
-                        </Col>
-                    </Row>
-                </div>
+                {
+                    !this.props.children
+                    ?
+                    <div>
+                        <Form className="search-form" inline>
+                            <FormItem
+                                label="区域一"
+                            >
+                                <Select 
+                                    {...getFieldProps('area1')}
+                                    value={this.state.areaView1}
+                                    onChange={this.areaChange1}
+                                    allowClear
+                                    style={{ width: 150 }} 
+                                >
+                                    <Option value="国内">国内</Option>
+                                    <Option value="海外">海外</Option>
+                                </Select>
+                            </FormItem>
+                            <FormItem
+                                label="区域二"
+                            >
+                                <Select 
+                                    {...getFieldProps('area12')}
+                                    value={this.state.areaView12}
+                                    onChange={this.areaChange12}
+                                    allowClear
+                                    style={{ width: 150 }} 
+                                >
+                                    { 
+                                        this.state.areaLists.map((e, i) => 
+                                            <Option value={e} key={i}>{e}</Option>
+                                        )
+                                    }
+                                </Select>
+                            </FormItem>
+                            <FormItem>
+                                <Button type="primary">查询</Button>
+                            </FormItem>
+                        </Form>
+                        <div>
+                            <Row gutter="16" style={{marginTop: '16px'}}>
+                                <Col span="12">
+                                    <Card title="服务器分布" extra={<Button type="dashed" onClick={this.details.bind(this, '1')}>详细</Button>}>
+                                        <div id="serverArea" className="chart-item"></div>
+                                    </Card>
+                                </Col>
+                                <Col span="12">
+                                    <Card title="服务器上下架" extra={<Button type="dashed" onClick={this.details.bind(this, '2')}>详细</Button>}>
+                                        <div id="serverType" className="chart-item"></div>
+                                    </Card>
+                                </Col>
+                            </Row>
+                            <Row gutter="16" style={{marginTop: '16px'}}>
+                                <Col span="12">
+                                    <Card title="网络设备">
+                                        <div id="netDevice" className="chart-item"></div>
+                                    </Card>
+                                </Col>
+                                <Col span="12">
+                                    <Card title="库存">
+                                        <div id="inventory" className="chart-item"></div>
+                                    </Card>
+                                </Col>
+                            </Row>
+                        </div>
+                    </div>
+                    :
+                    <div>
+                        {this.props.children}
+                    </div>
+                }
             </div>
         )
     }

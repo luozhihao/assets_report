@@ -82,9 +82,9 @@ class Sider extends Component {
                         </div>
                         <Menu mode="horizontal" theme="dark">
                             <Menu.Item key="1" >
-                                <IndexLink to="/" activeClassName="active">
+                                <Link to="/IdcChart" activeClassName="active">
                                     IDC视角
-                                </IndexLink>
+                                </Link>
                             </Menu.Item>
                             <Menu.Item key="2">
                                 <Link to="/ProductChart" activeClassName="active">

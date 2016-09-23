@@ -27,22 +27,17 @@ class ServerChart extends Component {
     }
 
     componentDidMount () {
-        let params = this.props.params
+        let state = this.props.location.state
 
-        this.randerChart('serverArea')
+        this.randerChart('serverArea2')
+        
+        this.setState({
+            areaView1: state.area1,
+            areaView12: state.area2
+        })
 
-        if (params.area1 !== 'all') {
-            this.setState({
-                areaView1: params.area1,
-                areaView12: params.area2 !== 'all' ? params.area2 : ''
-            })
-
-            this.areaGet(params.area1, {areaLists: areaData1}, {areaLists: areaData2})
-        } else {
-            this.setState({
-                areaView1: '',
-                areaView12: ''
-            })
+        if (state.area1) {
+            this.areaGet(state.area1, {areaLists: areaData1}, {areaLists: areaData2})
         }
     }
 
@@ -69,10 +64,7 @@ class ServerChart extends Component {
 
     // 返回方法
     goBack = () => {
-        this.props.history.pushState({
-            area1: this.state.areaView1,
-            area2: this.state.areaView12,
-        }, '/')
+        this.props.history.pushState(null, '/IdcChart')
     }
 
     // 绘图方法
@@ -208,7 +200,7 @@ class ServerChart extends Component {
                     <Row gutter="16" style={{marginTop: '80px'}}>
                         <Col span="24">
                             <Card title="服务器分布">
-                                <div id="serverArea"></div>
+                                <div id="serverArea2"></div>
                             </Card>
                         </Col>
                     </Row>
