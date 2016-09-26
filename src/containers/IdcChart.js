@@ -9,13 +9,6 @@ require('es6-promise').polyfill()
 
 const FormItem = Form.Item
 
-const data = {
-    "area": {"data": [{"data": [5, 2, 4], name: '国内'}], "categories": ['物理机', '云主机', '虚拟机']}, 
-    "type": {"data": [{"data": [3, 4, 5], name: '国内'}], "categories": ['物理机', '云主机', '虚拟机']}, 
-    "device": {"data": [{"data": [2, 7, 3], name: '国内'}], "categories": ['物理机', '云主机', '虚拟机']}, 
-    "inventory": {"data": [{"data": [1, 4, 8], name: '国内'}], "categories": ['物理机', '云主机', '虚拟机']}
-}
-
 const areaData1 = ['内网', '外网']
 const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台湾', '韩国', '欧州']
 
@@ -34,13 +27,6 @@ class IdcChart extends Component {
 
     componentDidMount () {
         this.getChart()
-
-        /*setTimeout(() => {
-            this.randerChart('serverArea', '台', '台', data.area, 1, '可点击', 'overview')
-            this.randerChart('serverType', '台', '台', data.type, 1, '可点击', 'overview')
-            this.randerChart('netDevice', '台', '台', data.device, 1, '可点击', 'game')
-            this.randerChart('inventory', '台', '台', data.inventory, 1, '可点击', 'mobile')
-        }, 0)*/
     }
 
     componentWillReceiveProps () {
@@ -53,14 +39,15 @@ class IdcChart extends Component {
     getChart = () => {
         fetch("/overview/", {
             method: "POST",
-            credentials: 'include'
+            credentials: 'include',
+            body: JSON.stringify({region: this.state.areaView1, area: this.state.areaView12})
         })
         .then((res) => { return res.json() })
         .then((data) => {
-            this.randerChart('serverArea', '台', '台', data.server, 1, '可点击', 'overview')
-            this.randerChart('serverType', '台', '台', data.onoff, 1, '可点击', 'overview')
-            this.randerChart('netDevice', '台', '台', data.netdevice, 1, '可点击', 'overview')
-            this.randerChart('inventory', '台', '台', data.status, 1, '可点击', 'overview')
+            this.randerChart('serverArea', data.server)
+            this.randerChart('serverType', data.onoff)
+            this.randerChart('netDevice', data.netdevice)
+            this.randerChart('inventory', data.status)
         })
     }
 
@@ -95,7 +82,7 @@ class IdcChart extends Component {
     }
 
     // 绘图方法
-    randerChart = (chartId, yName, unit, data, level, clickable, type, labelInside = true) => {
+    randerChart = (chartId, data, level) => {
         var _this = this
 
         var chart = new Highcharts.Chart({
@@ -118,13 +105,13 @@ class IdcChart extends Component {
                 min: 0,
                 allowDecimals: false,
                 title: {
-                    text: yName
+                    text: '台'
                 }
             },
             tooltip: {
                 headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
                 pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
-                    '<td style="padding:0"><b>{point.y} ' + unit + '（' + clickable +'）</b></td></tr>',
+                    '<td style="padding:0"><b>{point.y} 台</b></td></tr>',
                 footerFormat: '</table>',
                 shared: true,
                 useHTML: true
@@ -137,19 +124,13 @@ class IdcChart extends Component {
                     point: {
                         events: {
                             click: function(event) {
-                                if (clickable === '可点击') {
-                                    switch (level) {
-                                        case 1:
-                                            _this.showView(event.point, type)
-                                            break
-                                    }
-                                }
+                                _this.showView(event.point)
                             }
                         }
                     },
                     dataLabels: {
-                        rotation: labelInside ? -90 : 0,
-                        inside: labelInside,
+                        rotation: 0,
+                        inside: true,
                         enabled: true,
                         color: '#fff',
                         style: {
@@ -205,7 +186,7 @@ class IdcChart extends Component {
                                 </Select>
                             </FormItem>
                             <FormItem>
-                                <Button type="primary">查询</Button>
+                                <Button type="primary" onClick={this.getChart}>查询</Button>
                             </FormItem>
                         </Form>
                         <div>

@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import Highcharts from 'highcharts'
 import { Form, Select, Button, Card, Col, Row } from 'antd'
+import { setModal } from '../actions/count'
 import 'fetch-polyfill'
 import 'whatwg-fetch'
 require('es6-promise').polyfill()
@@ -15,6 +17,11 @@ const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台�
 
 const colors = ['#7cb5ec', '#f7a35c', '#90ed7d', '#8085e9', '#f15c80', '#e4d354', '#00BCD4', '#8d4653', '#91e8e1', '#009688']
 
+const data = {
+    "area": {"data": [{name: '物理机', data: [3, 6, 2]}, {name: '虚拟机', data: [2, 5, 4]}, {name: '云主机', data: [1, 3, 4] }], "categories": ['九阴真经', '天子', '天堂II']}, 
+    "type": {"data": [{name: '自有', data: [3, 6, 2]}, {name: '租赁', data: [2, 5, 4]}], "categories": ['九阴真经', '天子', '天堂II']}
+}
+
 class ProductChart extends Component {
     constructor(props) {
         super(props)
@@ -26,7 +33,8 @@ class ProductChart extends Component {
     }
 
     componentDidMount () {
-        this.randerChart('serverArea')
+        this.randerChart('serverArea', data.area)
+        this.randerChart('serverType', data.type)
     }
 
     // 区域变更
@@ -43,8 +51,15 @@ class ProductChart extends Component {
         this.setState({areaView12: value})
     }
 
+    // 显示弹框
+    showView = () => {
+        this.props.setModal(true)
+    }
+
     // 绘图方法
-    randerChart = (chartId) => {
+    randerChart = (chartId, data) => {
+        var _this = this
+
         var chart = new Highcharts.Chart({
             chart: {
                 renderTo: chartId,
@@ -58,47 +73,48 @@ class ProductChart extends Component {
                 enabled: false
             },
             xAxis: {
-                categories: ['物理机', '虚拟机', '云主机']
+                categories: data.categories
             },
             yAxis: {
                 min: 0,
+                allowDecimals: false,
                 title: {
                     text: '台'
-                },
-                stackLabels: {
-                    enabled: true,
-                    style: {
-                        fontWeight: 'bold',
-                        color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
-                    }
                 }
             },
             tooltip: {
-                formatter: function () {
-                    return '<b>' + this.x + '</b><br/>' +
-                        this.series.name + ': ' + this.y + '<br/>' +
-                        'Total: ' + this.point.stackTotal;
-                }
+                headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                    '<td style="padding:0"><b>{point.y}台（可点击）</b></td></tr>',
+                footerFormat: '</table>',
+                shared: true,
+                useHTML: true
             },
             plotOptions: {
                 column: {
-                    stacking: 'normal',
+                    pointPadding: 0.2,
+                    borderWidth: 0,
+                    cursor: 'pointer',
+                    point: {
+                        events: {
+                            click: function(event) {
+                                _this.showView(event.point)
+                            }
+                        }
+                    },
                     dataLabels: {
+                        rotation: 0,
+                        inside: true,
                         enabled: true,
-                        color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
+                        color: '#fff',
                         style: {
+                            fontFamily: 'Verdana, sans-serif',
                             textShadow: '0 0 3px black'
                         }
                     }
                 }
             },
-            series: [{
-                name: '自有',
-                data: [3, 6, 2]
-            }, {
-                name: '租赁',
-                data: [2, 5, 4]
-            }]
+            series: data.data
         })
     }
 
@@ -141,10 +157,15 @@ class ProductChart extends Component {
                     </FormItem>
                 </Form>
                 <div>
-                    <Row gutter="16" style={{marginTop: '80px'}}>
+                    <Row gutter="16" style={{marginTop: '16px'}}>
                         <Col span="24">
                             <Card title="服务器分布">
-                                <div id="serverArea"></div>
+                                <div id="serverArea" className="chart-item"></div>
+                            </Card>
+                        </Col>
+                        <Col span="24" style={{marginTop: '16px'}}>
+                            <Card title="上下架分布">
+                                <div id="serverType" className="chart-item"></div>
                             </Card>
                         </Col>
                     </Row>
@@ -156,5 +177,5 @@ class ProductChart extends Component {
 
 ProductChart = Form.create()(ProductChart)
 
-export default ProductChart
+export default connect(null, { setModal })(ProductChart)
 

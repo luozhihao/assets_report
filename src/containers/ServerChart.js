@@ -1,14 +1,13 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import Highcharts from 'highcharts'
-import { Form, Select, Button, Card, Col, Row } from 'antd'
+import { Form, Select, Button, Card, Col, Row, message } from 'antd'
+import { setModal, getIDC, getProduct } from '../actions/count'
 import 'fetch-polyfill'
 import 'whatwg-fetch'
 require('es6-promise').polyfill()
 
 const FormItem = Form.Item
-
-// 创建对象时设置初始化信息
-const headers = new Headers()
 
 const areaData1 = ['内网', '外网']
 const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台湾', '韩国', '欧州']
@@ -28,8 +27,6 @@ class ServerChart extends Component {
 
     componentDidMount () {
         let state = this.props.location.state
-
-        this.randerChart('serverArea2')
         
         this.setState({
             areaView1: state.area1,
@@ -39,13 +36,65 @@ class ServerChart extends Component {
         if (state.area1) {
             this.areaGet(state.area1, {areaLists: areaData1}, {areaLists: areaData2})
         }
+
+        this.props.getIDC()
+    }
+
+    // 获取图表数据
+    getChart = () => {
+        const {areaView1, areaView12, view} = this.state
+
+        const {rooms, products} = this.props.form.getFieldsValue()
+
+        fetch("/chart/idc_detail/", {
+            method: "POST",
+            credentials: 'include',
+            body: JSON.stringify({ 
+                region: areaView1, 
+                area: areaView12,
+                view: view,
+                idcs: rooms,
+                products: products
+            })
+        })
+        .then((res) => { return res.json() })
+        .then((data) => {
+            this.randerChart('serverArea2', data.chart)
+        })
+    }
+
+    // 查询
+    searchFn = () => {
+        this.props.form.validateFields((errors, values) => {
+            if (!!errors) {
+                return
+            }
+
+            if (this.state.view === '产品' && !this.props.form.getFieldValue('products').length) {
+                message.info('请选择产品！')
+
+                return
+            }
+
+            this.getChart()
+        })
     }
 
     // 维度变更
     viewChange = value => {
+        const {productLists, getProduct} = this.props
+
         this.setState({
             view: value
         })
+
+        if (value === '产品') {
+            getProduct()
+        } else {
+            this.setState({
+                products: []
+            })
+        }
     }
 
     // 区域变更
@@ -67,8 +116,15 @@ class ServerChart extends Component {
         this.props.history.pushState(null, '/IdcChart')
     }
 
+    // 显示弹框
+    showView = () => {
+        this.props.setModal(true)
+    }
+
     // 绘图方法
-    randerChart = (chartId) => {
+    randerChart = (chartId, data) => {
+        var _this = this
+
         var chart = new Highcharts.Chart({
             chart: {
                 renderTo: chartId,
@@ -82,7 +138,7 @@ class ServerChart extends Component {
                 enabled: false
             },
             xAxis: {
-                categories: ['机房A', '机房B', '机房C']
+                categories: data.categories
             },
             yAxis: {
                 min: 0,
@@ -107,13 +163,15 @@ class ServerChart extends Component {
                     point: {
                         events: {
                             click: function(event) {
+                                _this.showView(event.point)
+
                                 console.log(event.point.category)
                                 console.log(event.point.series.name)
                             }
                         }
                     },
                     dataLabels: {
-                        rotation: -90,
+                        rotation: 0,
                         inside: true,
                         enabled: true,
                         color: '#fff',
@@ -124,31 +182,31 @@ class ServerChart extends Component {
                     }
                 }
             },
-            series: [{
-                name: '物理机',
-                data: [3, 6, 2]
-            }, {
-                name: '虚拟机',
-                data: [2, 5, 4]
-            }, {
-                name: '云主机',
-                data: [2, 5, 4]
-            }]
+            series: data.data
         })
     }
 
     render() {
         const { getFieldProps } = this.props.form
 
+        const { view, areaView1, areaView12, areaLists } = this.state
+        const { roomLists, productLists } = this.props
+
+        const roomProps = getFieldProps('rooms', {
+            rules: [
+                { required: true, type: 'array', message: '请选择机房' }
+            ]
+        })
+
         return(
             <div>
-                <Form className="search-form" inline>
+                <Form className="search-form" form={this.props.form} inline>
                     <FormItem
                         label="区域一"
                     >
                         <Select 
                             {...getFieldProps('area1')}
-                            value={this.state.areaView1}
+                            value={areaView1}
                             onChange={this.areaChange1}
                             allowClear
                             style={{ width: 150 }} 
@@ -162,13 +220,30 @@ class ServerChart extends Component {
                     >
                         <Select 
                             {...getFieldProps('area12')}
-                            value={this.state.areaView12}
+                            value={areaView12}
                             onChange={this.areaChange12}
                             allowClear
                             style={{ width: 150 }} 
                         >
                             { 
-                                this.state.areaLists.map((e, i) => 
+                                areaLists.map((e, i) => 
+                                    <Option value={e} key={i}>{e}</Option>
+                                )
+                            }
+                        </Select>
+                    </FormItem>
+                    <FormItem
+                        label="机房"
+                        hasFeedback
+                    >
+                        <Select 
+                            {...roomProps}
+                            allowClear
+                            style={{ width: 200 }} 
+                            multiple
+                        >
+                            { 
+                                roomLists.map((e, i) => 
                                     <Option value={e} key={i}>{e}</Option>
                                 )
                             }
@@ -179,10 +254,10 @@ class ServerChart extends Component {
                     >
                         <Select 
                             {...getFieldProps('view')}
-                            value={this.state.view}
+                            value={view}
                             onChange={this.viewChange}
-                            allowClear
                             style={{ width: 150 }} 
+                            allowClear
                         >
                             <Option value="类型">类型</Option>
                             <Option value="产品">产品</Option>
@@ -190,8 +265,26 @@ class ServerChart extends Component {
                             <Option value="来源">来源</Option>
                         </Select>
                     </FormItem>
+                    <FormItem
+                        label="产品"
+                        className={view === "产品" ? '' : 'hide'}
+                        hasFeedback
+                    >
+                        <Select 
+                            {...getFieldProps('products')}
+                            style={{ width: 200 }} 
+                            allowClear
+                            multiple
+                        >
+                            { 
+                                productLists.map((e, i) => 
+                                    <Option value={e} key={i}>{e}</Option>
+                                )
+                            }
+                        </Select>
+                    </FormItem>
                     <FormItem>
-                        <Button type="primary">查询</Button>
+                        <Button type="primary" onClick={this.searchFn}>查询</Button>
                         &nbsp;&nbsp;
                         <Button onClick={this.goBack}>返回</Button>
                     </FormItem>
@@ -200,7 +293,7 @@ class ServerChart extends Component {
                     <Row gutter="16" style={{marginTop: '80px'}}>
                         <Col span="24">
                             <Card title="服务器分布">
-                                <div id="serverArea2"></div>
+                                <div id="serverArea2" style={{minHeight: '400px'}}></div>
                             </Card>
                         </Col>
                     </Row>
@@ -212,5 +305,12 @@ class ServerChart extends Component {
 
 ServerChart = Form.create()(ServerChart)
 
-export default ServerChart
+const getData = state => {
+    return {
+        roomLists: state.update.roomLists,
+        productLists: state.update.productLists
+    }
+}
+
+export default connect(getData, { setModal, getIDC, getProduct })(ServerChart)
 
