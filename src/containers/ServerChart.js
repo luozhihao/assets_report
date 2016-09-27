@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Highcharts from 'highcharts'
 import { Form, Select, Button, Card, Col, Row, message } from 'antd'
-import { setModal, getIDC, getProduct } from '../actions/count'
+import { getIDC, getProduct, getTable } from '../actions/count'
 import 'fetch-polyfill'
 import 'whatwg-fetch'
 require('es6-promise').polyfill()
@@ -66,13 +66,8 @@ class ServerChart extends Component {
     // 查询
     searchFn = () => {
         this.props.form.validateFields((errors, values) => {
+
             if (!!errors) {
-                return
-            }
-
-            if (this.state.view === '产品' && !this.props.form.getFieldValue('products').length) {
-                message.info('请选择产品！')
-
                 return
             }
 
@@ -117,8 +112,18 @@ class ServerChart extends Component {
     }
 
     // 显示弹框
-    showView = () => {
-        this.props.setModal(true)
+    showView = (event) => {
+        const {areaView1, areaView12, view}  = this.state
+        const {rooms, products} = this.props.form.getFieldsValue()
+
+        this.props.getTable({
+            x: event.category,
+            y: event.series.name,
+            region: areaView1,
+            area: areaView12,
+            view: view,
+            product: products
+        }, 'idc')
     }
 
     // 绘图方法
@@ -164,9 +169,6 @@ class ServerChart extends Component {
                         events: {
                             click: function(event) {
                                 _this.showView(event.point)
-
-                                console.log(event.point.category)
-                                console.log(event.point.series.name)
                             }
                         }
                     },
@@ -256,8 +258,7 @@ class ServerChart extends Component {
                             {...getFieldProps('view')}
                             value={view}
                             onChange={this.viewChange}
-                            style={{ width: 150 }} 
-                            allowClear
+                            style={{ width: 150 }}
                         >
                             <Option value="类型">类型</Option>
                             <Option value="产品">产品</Option>
@@ -265,24 +266,29 @@ class ServerChart extends Component {
                             <Option value="来源">来源</Option>
                         </Select>
                     </FormItem>
-                    <FormItem
-                        label="产品"
-                        className={view === "产品" ? '' : 'hide'}
-                        hasFeedback
-                    >
-                        <Select 
-                            {...getFieldProps('products')}
-                            style={{ width: 200 }} 
-                            allowClear
-                            multiple
+                    {
+                        this.state.view === '产品'
+                        ?
+                        <FormItem
+                            label="产品"
+                            hasFeedback
                         >
-                            { 
-                                productLists.map((e, i) => 
-                                    <Option value={e} key={i}>{e}</Option>
-                                )
-                            }
-                        </Select>
-                    </FormItem>
+                            <Select 
+                                {...getFieldProps('products', {rules: [{ required: true, type: 'array', message: '请选择产品' }]})}
+                                style={{ width: 200 }} 
+                                allowClear
+                                multiple
+                            >
+                                { 
+                                    productLists.map((e, i) => 
+                                        <Option value={e} key={i}>{e}</Option>
+                                    )
+                                }
+                            </Select>
+                        </FormItem>
+                        :
+                        <span></span>
+                    }
                     <FormItem>
                         <Button type="primary" onClick={this.searchFn}>查询</Button>
                         &nbsp;&nbsp;
@@ -312,5 +318,5 @@ const getData = state => {
     }
 }
 
-export default connect(getData, { setModal, getIDC, getProduct })(ServerChart)
+export default connect(getData, { getIDC, getProduct, getTable })(ServerChart)
 

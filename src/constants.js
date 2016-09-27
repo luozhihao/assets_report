@@ -2,4 +2,7 @@
 export const SHOWMODAL = 'SHOWMODAL'
 export const SEARCHIDC = 'SEARCHIDC'
 export const SEARCHPRODUCT = 'SEARCHPRODUCT'
+export const SEARCHDEPARTMENT = 'SEARCHDEPARTMENT'
+export const SETTABLE = 'SETTABLE'
+export const SETSWITCH = 'SETSWITCH'
 

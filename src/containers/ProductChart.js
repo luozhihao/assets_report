@@ -2,25 +2,17 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Highcharts from 'highcharts'
 import { Form, Select, Button, Card, Col, Row } from 'antd'
-import { setModal } from '../actions/count'
+import { getProduct, getTable } from '../actions/count'
 import 'fetch-polyfill'
 import 'whatwg-fetch'
 require('es6-promise').polyfill()
 
 const FormItem = Form.Item
 
-// 创建对象时设置初始化信息
-const headers = new Headers()
-
 const areaData1 = ['内网', '外网']
 const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台湾', '韩国', '欧州']
 
 const colors = ['#7cb5ec', '#f7a35c', '#90ed7d', '#8085e9', '#f15c80', '#e4d354', '#00BCD4', '#8d4653', '#91e8e1', '#009688']
-
-const data = {
-    "area": {"data": [{name: '物理机', data: [3, 6, 2]}, {name: '虚拟机', data: [2, 5, 4]}, {name: '云主机', data: [1, 3, 4] }], "categories": ['九阴真经', '天子', '天堂II']}, 
-    "type": {"data": [{name: '自有', data: [3, 6, 2]}, {name: '租赁', data: [2, 5, 4]}], "categories": ['九阴真经', '天子', '天堂II']}
-}
 
 class ProductChart extends Component {
     constructor(props) {
@@ -33,8 +25,40 @@ class ProductChart extends Component {
     }
 
     componentDidMount () {
-        this.randerChart('serverArea', data.area)
-        this.randerChart('serverType', data.type)
+        this.props.getProduct()
+    }
+
+    // 获取图表数据
+    getChart = () => {
+        const {areaView1, areaView12} = this.state
+
+        const {products} = this.props.form.getFieldsValue()
+
+        fetch("/chart/product_view/", {
+            method: "POST",
+            credentials: 'include',
+            body: JSON.stringify({ 
+                region: areaView1, 
+                area: areaView12,
+                products: products
+            })
+        })
+        .then((res) => { return res.json() })
+        .then((data) => {
+            this.randerChart('serverArea', data.device_chart, '类型')
+            this.randerChart('serverType', data.source_chart, '来源')
+        })
+    }
+
+    // 查询
+    searchFn = () => {
+        this.props.form.validateFields((errors, values) => {
+            if (!!errors) {
+                return
+            }
+
+            this.getChart()
+        })
     }
 
     // 区域变更
@@ -52,12 +76,22 @@ class ProductChart extends Component {
     }
 
     // 显示弹框
-    showView = () => {
-        this.props.setModal(true)
+    showView = (event, type) => {
+        const {areaView1, areaView12}  = this.state
+        const {products} = this.props.form.getFieldsValue()
+
+        this.props.getTable({
+            x: event.category,
+            y: event.series.name,
+            region: areaView1,
+            area: areaView12,
+            view: type,
+            product: products
+        }, 'product')
     }
 
     // 绘图方法
-    randerChart = (chartId, data) => {
+    randerChart = (chartId, data, type) => {
         var _this = this
 
         var chart = new Highcharts.Chart({
@@ -79,7 +113,8 @@ class ProductChart extends Component {
                 min: 0,
                 allowDecimals: false,
                 title: {
-                    text: '台'
+                    text: '台',
+                    rotation: 0
                 }
             },
             tooltip: {
@@ -98,7 +133,7 @@ class ProductChart extends Component {
                     point: {
                         events: {
                             click: function(event) {
-                                _this.showView(event.point)
+                                _this.showView(event.point, type)
                             }
                         }
                     },
@@ -121,9 +156,17 @@ class ProductChart extends Component {
     render() {
         const { getFieldProps } = this.props.form
 
+        const { productLists } = this.props
+
+        const productProps = getFieldProps('products', {
+            rules: [
+                { required: true, type: 'array', message: '请选择产品' }
+            ]
+        })
+
         return(
             <div>
-                <Form className="search-form" inline>
+                <Form className="search-form" form={this.props.form} inline>
                     <FormItem
                         label="区域一"
                     >
@@ -155,6 +198,26 @@ class ProductChart extends Component {
                             }
                         </Select>
                     </FormItem>
+                    <FormItem
+                        label="产品"
+                        hasFeedback
+                    >
+                        <Select 
+                            {...productProps}
+                            style={{ width: 200 }} 
+                            allowClear
+                            multiple
+                        >
+                            { 
+                                productLists.map((e, i) => 
+                                    <Option value={e} key={i}>{e}</Option>
+                                )
+                            }
+                        </Select>
+                    </FormItem>
+                    <FormItem>
+                        <Button type="primary" onClick={this.searchFn}>查询</Button>
+                    </FormItem>
                 </Form>
                 <div>
                     <Row gutter="16" style={{marginTop: '16px'}}>
@@ -164,7 +227,7 @@ class ProductChart extends Component {
                             </Card>
                         </Col>
                         <Col span="24" style={{marginTop: '16px'}}>
-                            <Card title="上下架分布">
+                            <Card title="来源分布">
                                 <div id="serverType" className="chart-item"></div>
                             </Card>
                         </Col>
@@ -177,5 +240,11 @@ class ProductChart extends Component {
 
 ProductChart = Form.create()(ProductChart)
 
-export default connect(null, { setModal })(ProductChart)
+const getData = state => {
+    return {
+        productLists: state.update.productLists
+    }
+}
+
+export default connect(getData, { getProduct, getTable })(ProductChart)
 

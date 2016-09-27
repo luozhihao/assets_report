@@ -1,14 +1,13 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import Highcharts from 'highcharts'
-import { Form, Select, Button, Card, Col, Row } from 'antd'
+import { Form, Select, Button, Card, Col, Row, message } from 'antd'
+import { getProduct, getTable } from '../actions/count'
 import 'fetch-polyfill'
 import 'whatwg-fetch'
 require('es6-promise').polyfill()
 
 const FormItem = Form.Item
-
-// 创建对象时设置初始化信息
-const headers = new Headers()
 
 const areaData1 = ['内网', '外网']
 const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台湾', '韩国', '欧州']
@@ -28,8 +27,6 @@ class ServerType extends Component {
 
     componentDidMount () {
         let state = this.props.location.state
-
-        this.randerChart('serverArea3')
         
         this.setState({
             areaView1: state.area1,
@@ -39,13 +36,58 @@ class ServerType extends Component {
         if (state.area1) {
             this.areaGet(state.area1, {areaLists: areaData1}, {areaLists: areaData2})
         }
+
+        this.getChart()
+    }
+
+    // 获取图表数据
+    getChart = () => {
+        const {areaView1, areaView12, view} = this.state
+
+        const {products} = this.props.form.getFieldsValue()
+
+        fetch("/chart/onoff_detail/", {
+            method: "POST",
+            credentials: 'include',
+            body: JSON.stringify({ 
+                region: areaView1, 
+                area: areaView12,
+                view: view,
+                products: products
+            })
+        })
+        .then((res) => { return res.json() })
+        .then((data) => {
+            this.randerChart('serverArea2', data.chart)
+        })
+    }
+
+    // 查询
+    searchFn = () => {
+        this.props.form.validateFields((errors, values) => {
+            if (!!errors) {
+                return
+            }
+
+            this.getChart()
+        })
     }
 
     // 维度变更
     viewChange = value => {
+        const {productLists, getProduct} = this.props
+
         this.setState({
             view: value
         })
+
+        if (value === '产品') {
+            getProduct()
+        } else {
+            this.setState({
+                products: []
+            })
+        }
     }
 
     // 区域变更
@@ -67,8 +109,25 @@ class ServerType extends Component {
         this.props.history.pushState(null, '/IdcChart')
     }
 
+    // 显示弹框
+    showView = (event) => {
+        const {areaView1, areaView12, view}  = this.state
+        const {products} = this.props.form.getFieldsValue()
+
+        this.props.getTable({
+            x: event.category,
+            y: event.series.name,
+            region: areaView1,
+            area: areaView12,
+            view: view,
+            product: products
+        }, 'onoff')
+    }
+
     // 绘图方法
-    randerChart = (chartId) => {
+    randerChart = (chartId, data) => {
+        var _this = this
+
         var chart = new Highcharts.Chart({
             chart: {
                 renderTo: chartId,
@@ -82,7 +141,7 @@ class ServerType extends Component {
                 enabled: false
             },
             xAxis: {
-                categories: ['物理机', '云主机', '虚拟机']
+                categories: data.categories
             },
             yAxis: {
                 min: 0,
@@ -107,13 +166,12 @@ class ServerType extends Component {
                     point: {
                         events: {
                             click: function(event) {
-                                console.log(event.point.category)
-                                console.log(event.point.series.name)
+                                _this.showView(event.point)
                             }
                         }
                     },
                     dataLabels: {
-                        rotation: -90,
+                        rotation: 0,
                         inside: true,
                         enabled: true,
                         color: '#fff',
@@ -124,28 +182,25 @@ class ServerType extends Component {
                     }
                 }
             },
-            series: [{
-                name: '上架',
-                data: [6, 2, 4]
-            }, {
-                name: '下架',
-                data: [2, 3, 5]
-            }]
+            series: data.data
         })
     }
 
     render() {
         const { getFieldProps } = this.props.form
 
+        const { view, areaView1, areaView12, areaLists } = this.state
+        const { productLists } = this.props
+
         return(
             <div>
-                <Form className="search-form" inline>
+                <Form className="search-form" form={this.props.form} inline>
                     <FormItem
                         label="区域一"
                     >
                         <Select 
                             {...getFieldProps('area1')}
-                            value={this.state.areaView1}
+                            value={areaView1}
                             onChange={this.areaChange1}
                             allowClear
                             style={{ width: 150 }} 
@@ -159,13 +214,13 @@ class ServerType extends Component {
                     >
                         <Select 
                             {...getFieldProps('area12')}
-                            value={this.state.areaView12}
+                            value={areaView12}
                             onChange={this.areaChange12}
                             allowClear
                             style={{ width: 150 }} 
                         >
                             { 
-                                this.state.areaLists.map((e, i) => 
+                                areaLists.map((e, i) => 
                                     <Option value={e} key={i}>{e}</Option>
                                 )
                             }
@@ -176,10 +231,9 @@ class ServerType extends Component {
                     >
                         <Select 
                             {...getFieldProps('view')}
-                            value={this.state.view}
+                            value={view}
                             onChange={this.viewChange}
-                            allowClear
-                            style={{ width: 150 }} 
+                            style={{ width: 150 }}
                         >
                             <Option value="类型">类型</Option>
                             <Option value="产品">产品</Option>
@@ -187,8 +241,31 @@ class ServerType extends Component {
                             <Option value="来源">来源</Option>
                         </Select>
                     </FormItem>
+                    {
+                        this.state.view === '产品'
+                        ?
+                        <FormItem
+                            label="产品"
+                            hasFeedback
+                        >
+                            <Select 
+                                {...getFieldProps('products', {rules: [{ required: true, type: 'array', message: '请选择产品' }]})}
+                                style={{ width: 200 }} 
+                                allowClear
+                                multiple
+                            >
+                                { 
+                                    productLists.map((e, i) => 
+                                        <Option value={e} key={i}>{e}</Option>
+                                    )
+                                }
+                            </Select>
+                        </FormItem>
+                        :
+                        <span></span>
+                    }
                     <FormItem>
-                        <Button type="primary">查询</Button>
+                        <Button type="primary" onClick={this.searchFn}>查询</Button>
                         &nbsp;&nbsp;
                         <Button onClick={this.goBack}>返回</Button>
                     </FormItem>
@@ -197,7 +274,7 @@ class ServerType extends Component {
                     <Row gutter="16" style={{marginTop: '80px'}}>
                         <Col span="24">
                             <Card title="服务器分布">
-                                <div id="serverArea3"></div>
+                                <div id="serverArea2" style={{minHeight: '400px'}}></div>
                             </Card>
                         </Col>
                     </Row>
@@ -209,5 +286,11 @@ class ServerType extends Component {
 
 ServerType = Form.create()(ServerType)
 
-export default ServerType
+const getData = state => {
+    return {
+        productLists: state.update.productLists
+    }
+}
+
+export default connect(getData, { getProduct, getTable })(ServerType)
 

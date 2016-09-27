@@ -8,7 +8,7 @@ require('es6-promise').polyfill()
 
 import { Menu, Icon, Tooltip } from 'antd'
 import DetailModal from '../components/DetailModal'
-import { setModal } from '../actions/count'
+import { setModal, setSwitch } from '../actions/count'
 
 const SubMenu = Menu.SubMenu
 
@@ -38,6 +38,11 @@ class Sider extends Component {
     // 关闭弹框
     handleCancel = () => {
         this.props.setModal(false)
+    }
+
+    // 切换图表
+    switchFn = (checked) => {
+        this.props.setSwitch(checked)
     }
 
     // 获取用户名
@@ -73,6 +78,8 @@ class Sider extends Component {
     }
 
     render() {
+        const {visible, tableData, chartData, checked} = this.props
+
         return (
             <div id="rightWrap">
                 <div className="ant-layout-header">
@@ -102,7 +109,14 @@ class Sider extends Component {
                 <div className="right-box">
                     { this.props.children }
                 </div>
-                <DetailModal visible={this.props.visible} handleCancel={this.handleCancel}></DetailModal>
+                <DetailModal 
+                    visible={visible} 
+                    handleCancel={this.handleCancel}
+                    tableData={tableData}
+                    chartData={chartData}
+                    checked={checked}
+                    switchFn={this.switchFn}
+                ></DetailModal>
             </div>
         )
     }
@@ -111,7 +125,10 @@ class Sider extends Component {
 const getData = state => {
     return {
         visible: state.update.visible,
+        tableData: state.update.tableData,
+        chartData: state.update.chartData,
+        checked: state.update.checked
     }
 }
 
-export default connect(getData, { setModal })(Sider)
+export default connect(getData, { setModal, setSwitch })(Sider)

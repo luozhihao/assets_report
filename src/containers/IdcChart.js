@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Highcharts from 'highcharts'
 import { Form, Select, Button, Card, Col, Row } from 'antd'
-import { setModal } from '../actions/count'
 import 'fetch-polyfill'
 import 'whatwg-fetch'
 require('es6-promise').polyfill()
@@ -76,18 +75,10 @@ class IdcChart extends Component {
         this.props.history.pushState({area1: area1, area2: area2}, url)
     }
 
-    // 显示弹框
-    showView = () => {
-        this.props.setModal(true)
-    }
-
     // 绘图方法
-    randerChart = (chartId, data, level) => {
-        var _this = this
-
+    randerChart = (chartId, data) => {
         var chart = new Highcharts.Chart({
             chart: {
-                zoomType: 'y',
                 renderTo: chartId,
                 type: 'column'
             },
@@ -105,7 +96,8 @@ class IdcChart extends Component {
                 min: 0,
                 allowDecimals: false,
                 title: {
-                    text: '台'
+                    text: '台',
+                    rotation: 0
                 }
             },
             tooltip: {
@@ -120,14 +112,6 @@ class IdcChart extends Component {
                 column: {
                     pointPadding: 0.2,
                     borderWidth: 0,
-                    cursor: 'pointer',
-                    point: {
-                        events: {
-                            click: function(event) {
-                                _this.showView(event.point)
-                            }
-                        }
-                    },
                     dataLabels: {
                         rotation: 0,
                         inside: true,
@@ -228,5 +212,5 @@ class IdcChart extends Component {
 
 IdcChart = Form.create()(IdcChart)
 
-export default connect(null, { setModal })(IdcChart)
+export default connect(null, {})(IdcChart)
 
