@@ -8,6 +8,7 @@ import 'whatwg-fetch'
 require('es6-promise').polyfill()
 
 const FormItem = Form.Item
+const Option = Select.Option
 
 const areaData1 = ['内网', '外网']
 const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台湾', '韩国', '欧州']
@@ -112,15 +113,13 @@ class ServerType extends Component {
     // 显示弹框
     showView = (event) => {
         const {areaView1, areaView12, view}  = this.state
-        const {products} = this.props.form.getFieldsValue()
 
         this.props.getTable({
             x: event.category,
             y: event.series.name,
             region: areaView1,
             area: areaView12,
-            view: view,
-            product: products
+            view: view
         }, 'onoff')
     }
 
@@ -271,7 +270,7 @@ class ServerType extends Component {
                     </FormItem>
                 </Form>
                 <div>
-                    <Row gutter="16" style={{marginTop: '80px'}}>
+                    <Row gutter={16} style={{marginTop: '80px'}}>
                         <Col span="24">
                             <Card title="服务器分布">
                                 <div id="serverArea2" style={{minHeight: '400px'}}></div>

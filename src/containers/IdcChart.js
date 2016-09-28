@@ -7,6 +7,7 @@ import 'whatwg-fetch'
 require('es6-promise').polyfill()
 
 const FormItem = Form.Item
+const Option = Select.Option
 
 const areaData1 = ['内网', '外网']
 const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台湾', '韩国', '欧州']
@@ -174,7 +175,7 @@ class IdcChart extends Component {
                             </FormItem>
                         </Form>
                         <div>
-                            <Row gutter="16" style={{marginTop: '16px'}}>
+                            <Row gutter={16} style={{marginTop: '16px'}}>
                                 <Col span="12">
                                     <Card title="服务器分布" extra={<Button type="dashed" onClick={this.details.bind(this, '1')}>详细</Button>}>
                                         <div id="serverArea" className="chart-item"></div>
@@ -186,7 +187,7 @@ class IdcChart extends Component {
                                     </Card>
                                 </Col>
                             </Row>
-                            <Row gutter="16" style={{marginTop: '16px'}}>
+                            <Row gutter={16} style={{marginTop: '16px'}}>
                                 <Col span="12">
                                     <Card title="网络设备">
                                         <div id="netDevice" className="chart-item"></div>

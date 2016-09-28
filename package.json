@@ -1,8 +1,15 @@
 {
-  "name": "rrr-basic-example",
-  "version": "0.0.0",
+  "name": "assets_report",
+  "version": "1.0.0",
   "repository": "reactjs/react-router-redux",
   "license": "MIT",
+  "scripts": {
+    "start": "webpack-dev-server --history-api-fallback --no-info --open",
+    "build": "webpack",
+    "prod": "set NODE_ENV=prod&&webpack -p --config ./webpack.production.config.js --progress --colors",
+    "dev": "set NODE_ENV=dev&&webpack -p --progress --colors",
+    "watch": "webpack -w"
+  },
   "dependencies": {
     "antd": "^1.6.4",
     "bootstrap": "^3.3.6",
@@ -42,9 +49,5 @@
     "webpack": "^1.12.13",
     "webpack-dev-server": "^1.14.1",
     "whatwg-fetch": "^1.0.0"
-  },
-  "scripts": {
-    "start": "webpack-dev-server --history-api-fallback --no-info --open",
-    "build": "webpack -p"
   }
 }

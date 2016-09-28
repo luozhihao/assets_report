@@ -90,7 +90,7 @@ class DetailModal extends Component {
     }
 
     render() {
-        const { visible, handleCancel, tableData, chartData, checked } = this.props
+        const { visible, handleCancel, tableData, chartData, checked, tableLoading } = this.props
 
         return(
             <Modal ref="modal"
@@ -108,11 +108,11 @@ class DetailModal extends Component {
                     <Card title="上下架详情" extra={
                         <Switch checked={checked} onChange={this.handleChange} />
                     }>
-                        <Table className={checked ? 'hide' : ''} columns={columns} dataSource={tableData} pagination={false} scroll={{ y: 310 }} size="small" />
+                        <Table className={checked ? 'hide' : ''} loading={tableLoading} columns={columns} dataSource={tableData} pagination={false} scroll={{ y: 310 }} size="small" />
                         <div className={checked ? '' : 'hide'} id="onoffHistory"></div>
                     </Card>
                     :
-                    <Table columns={columns} dataSource={tableData} pagination={false} scroll={{ y: 310 }} size="small" />
+                    <Table loading={tableLoading} columns={columns} dataSource={tableData} pagination={false} scroll={{ y: 310 }} size="small" />
                 }
             </Modal>
         )
@@ -121,10 +121,10 @@ class DetailModal extends Component {
 
 DetailModal.propTypes = {
     visible: PropTypes.bool.isRequired,
+    tableLoading: PropTypes.bool.isRequired,
     checked: PropTypes.bool.isRequired,
     tableData: PropTypes.array.isRequired,
-    chartData: PropTypes.object.isRequired,
-    handleCancel: PropTypes.object.func
+    chartData: PropTypes.object
 }
 
 export default DetailModal

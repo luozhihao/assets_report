@@ -1,4 +1,4 @@
-import { SHOWMODAL, SEARCHIDC, SEARCHPRODUCT, SEARCHDEPARTMENT, SETTABLE, SETSWITCH } from '../constants'
+import { SHOWMODAL, SEARCHIDC, SEARCHPRODUCT, SEARCHDEPARTMENT, SETTABLE, SETSWITCH, SEARCHCENTER } from '../constants'
 
 // 初始化state数据
 const initialState = {
@@ -6,9 +6,11 @@ const initialState = {
     roomLists: [],
     productLists: [],
     departmentLists: [],
+    centerLists: [],
     tableData: [],
     chartData: null,
-    checked: false
+    checked: false,
+    tableLoading: true
 }
 
 export default function update(state = initialState, action) {
@@ -25,8 +27,11 @@ export default function update(state = initialState, action) {
         case SEARCHDEPARTMENT:
             return Object.assign({}, state, { departmentLists: action.departmentLists })
             break
+        case SEARCHCENTER:
+            return Object.assign({}, state, { centerLists: action.centerLists })
+            break
         case SETTABLE:
-            return Object.assign({}, state, { tableData: action.tableData, chartData: action.chartData })
+            return Object.assign({}, state, { tableData: action.tableData, chartData: action.chartData, tableLoading: action.tableLoading })
             break
         case SETSWITCH:
             return Object.assign({}, state, { checked: action.checked })

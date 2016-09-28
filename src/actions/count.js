@@ -1,4 +1,4 @@
-import { SHOWMODAL, SEARCHIDC, SEARCHPRODUCT, SEARCHDEPARTMENT, SETTABLE, SETSWITCH } from '../constants' 
+import { SHOWMODAL, SEARCHIDC, SEARCHPRODUCT, SEARCHDEPARTMENT, SETTABLE, SETSWITCH, SEARCHCENTER } from '../constants' 
 
 // 打开弹框
 export const setModal = isShow => {
@@ -38,12 +38,20 @@ export const setDepartment = departmentLists => {
     }
 }
 
+export const setCenter = centerLists => {
+    return {
+        type: SEARCHCENTER,
+        centerLists: centerLists
+    }
+}
+
 // 设置表格数据
 export const setTable = data => {
     return {
         type: SETTABLE,
         tableData: data.table,
-        chartData: data.chart
+        chartData: data.chart,
+        tableLoading: data.loading
     }
 }
 
@@ -87,7 +95,27 @@ function fetchProduct() {
     }
 }
 
-// 获取产品下拉框数据
+// 获取中心下拉框数据
+export function getCenter() {
+    return (dispatch, getState) => {
+        return dispatch(fetchCenter())
+    }
+}
+
+function fetchCenter() {
+    return dispatch => {
+        return fetch("/get_centers/", {
+                method: "GET",
+                credentials: 'include'
+            })
+            .then((res) => { return res.json() })
+            .then((data) => {
+                dispatch(setCenter(data))
+            })
+    }
+}
+
+// 获取部门下拉框数据
 export function getDepartment() {
     return (dispatch, getState) => {
         return dispatch(fetchDepartment())
@@ -110,6 +138,10 @@ function fetchDepartment() {
 // 获取弹框表格数据
 export function getTable(param, type) {
     return (dispatch, getState) => {
+        dispatch(setTable({table: [], loading: true}))
+        dispatch(setSwitch(false))
+        dispatch(setModal(true))
+
         return dispatch(fetchTable(param, type))
     }
 }
@@ -140,9 +172,7 @@ function fetchTable(param, type) {
             })
             .then((res) => { return res.json() })
             .then((data) => {
-                dispatch(setTable({table: data.devices, chart: data.chart}))
-                dispatch(setModal(true))
-                dispatch(setSwitch(false))
+                dispatch(setTable({table: data.devices, chart: data.chart, loading: false}))
             })
     }
 }

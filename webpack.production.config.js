@@ -1,13 +1,14 @@
-/* eslint-disable */
-const webpack = require('webpack');
+var webpack = require('webpack')
 
 module.exports = {
-    devtool: 'eval-source-map',
-    entry: './index.js',
+    devtool: 'source-map',
+    entry: {
+        main: __dirname + '/index.js'
+    },
     output: {
         path: __dirname + '/dist',
-        filename: 'bundle.js',
-        publicPath: '/static/dist/'
+        publicPath: '/static/dist/',
+        filename: 'bundle.js'
     },
     module: {
         loaders: [
@@ -31,13 +32,23 @@ module.exports = {
             { 
                 test: /\.(woff|svg|eot|ttf)\??.*$/,
                 loader: 'url?limit=50000&name=[path][name].[ext]'
-            }
+            },
+            {
+                test: /\.html$/,
+                loader: 'html'
+            },
         ]
     },
     plugins: [
+        new webpack.optimize.UglifyJsPlugin({
+            compress: {
+                warnings: false
+            }
+        }),
+        new webpack.optimize.OccurenceOrderPlugin(),
         new webpack.DefinePlugin({
             'process.env': {
-                NODE_ENV: '"development"'
+                NODE_ENV: '"production"'
             }
         })
     ]

@@ -1,16 +1,14 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Highcharts from 'highcharts'
-import { Form, Select, Button, Card, Col, Row } from 'antd'
-import { getDepartment, getTable } from '../actions/count'
+import { Form, Select, Button, Card, Col, Row, message } from 'antd'
+import { getDepartment, getTable, getCenter } from '../actions/count'
 import 'fetch-polyfill'
 import 'whatwg-fetch'
 require('es6-promise').polyfill()
 
 const FormItem = Form.Item
-
-// 创建对象时设置初始化信息
-const headers = new Headers()
+const Option = Select.Option
 
 const areaData1 = ['内网', '外网']
 const areaData2 = ['北美', '俄罗斯', '华人', '东南亚', '日本', '台湾', '韩国', '欧州']
@@ -23,19 +21,20 @@ class DepartmentChart extends Component {
         this.state = {
             areaView1: '',
             areaView12: '',
-            areaLists: []
+            areaLists: [],
+            centers: [],
+            departments: []
         }
     }
 
     componentDidMount () {
         this.props.getDepartment()
+        this.props.getCenter()
     }
 
     // 获取图表数据
     getChart = () => {
-        const {areaView1, areaView12} = this.state
-
-        const {departments} = this.props.form.getFieldsValue()
+        const {areaView1, areaView12, departments, centers} = this.state
 
         fetch("/chart/department_view/", {
             method: "POST",
@@ -43,7 +42,8 @@ class DepartmentChart extends Component {
             body: JSON.stringify({ 
                 region: areaView1, 
                 area: areaView12,
-                departments: departments
+                departments: departments,
+                centers: centers
             })
         })
         .then((res) => { return res.json() })
@@ -55,13 +55,15 @@ class DepartmentChart extends Component {
 
     // 查询
     searchFn = () => {
-        this.props.form.validateFields((errors, values) => {
-            if (!!errors) {
-                return
-            }
+        const {centers, departments} = this.state
 
-            this.getChart()
-        })
+        if (!centers.length && !departments.length) {
+            message.info('请选择中心或部门')
+
+            return false
+        }
+
+        this.getChart()
     }
 
     // 区域变更
@@ -78,18 +80,24 @@ class DepartmentChart extends Component {
         this.setState({areaView12: value})
     }
 
+    centerChange = value => {
+        this.setState({centers: value})
+    }
+
+    departmentChange = value => {
+        this.setState({departments: value})
+    }
+
     // 显示弹框
     showView = (event, type) => {
-        const {areaView1, areaView12}  = this.state
-        const {departments} = this.props.form.getFieldsValue()
+        const { areaView1, areaView12 }  = this.state
 
         this.props.getTable({
             x: event.category,
             y: event.series.name,
             region: areaView1,
             area: areaView12,
-            view: type,
-            department: departments
+            view: type
         }, 'department')
     }
 
@@ -159,13 +167,8 @@ class DepartmentChart extends Component {
     render() {
         const { getFieldProps } = this.props.form
 
-        const { departmentLists } = this.props
-
-        const departmentProps = getFieldProps('departments', {
-            rules: [
-                { required: true, type: 'array', message: '请选择产品' }
-            ]
-        })
+        const { departmentLists, centerLists } = this.props
+        const { departments, centers } = this.state
 
         return(
             <div>
@@ -202,12 +205,31 @@ class DepartmentChart extends Component {
                         </Select>
                     </FormItem>
                     <FormItem
-                        label="部门"
-                        hasFeedback
+                        label="中心"
                     >
                         <Select 
-                            {...departmentProps}
-                            style={{ width: 200 }} 
+                            {...getFieldProps('centers')}
+                            style={{ width: 230 }}
+                            value={centers}
+                            onChange={this.centerChange}
+                            allowClear
+                            multiple
+                        >
+                            { 
+                                centerLists.map((e, i) => 
+                                    <Option value={e} key={i}>{e}</Option>
+                                )
+                            }
+                        </Select>
+                    </FormItem>
+                    <FormItem
+                        label="部门"
+                    >
+                        <Select 
+                            {...getFieldProps('departments')}
+                            style={{ width: 230 }}
+                            value={departments}
+                            onChange={this.departmentChange}
                             allowClear
                             multiple
                         >
@@ -223,7 +245,7 @@ class DepartmentChart extends Component {
                     </FormItem>
                 </Form>
                 <div>
-                    <Row gutter="16" style={{marginTop: '16px'}}>
+                    <Row gutter={16} style={{marginTop: '16px'}}>
                         <Col span="24">
                             <Card title="服务器分布">
                                 <div id="serverArea" className="chart-item"></div>
@@ -245,9 +267,10 @@ DepartmentChart = Form.create()(DepartmentChart)
 
 const getData = state => {
     return {
-        departmentLists: state.update.departmentLists
+        departmentLists: state.update.departmentLists,
+        centerLists: state.update.centerLists
     }
 }
 
-export default connect(getData, { getDepartment, getTable })(DepartmentChart)
+export default connect(getData, { getDepartment, getTable, getCenter })(DepartmentChart)
 

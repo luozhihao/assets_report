@@ -12,9 +12,6 @@ import { setModal, setSwitch } from '../actions/count'
 
 const SubMenu = Menu.SubMenu
 
-// 创建对象时设置初始化信息
-const headers = new Headers()
-
 // 配置导航
 class Sider extends Component {
     constructor(props) {
@@ -47,13 +44,10 @@ class Sider extends Component {
 
     // 获取用户名
     getUser = () => {
-        let request = new Request('/userinfo/', {
-            headers,
-            method: 'POST',
-            credentials: 'include'
-        })
-
-        return fetch(request)
+        return fetch('/userinfo/', {
+                method: 'POST',
+                credentials: 'include'
+            })
             .then((res) => { return res.json() })
             .then((data) => {
                 this.setState({
@@ -64,13 +58,10 @@ class Sider extends Component {
 
     // 退出
     logout = () => {
-        let request = new Request('/logout/', {
-            headers,
-            method: 'POST',
-            credentials: 'include'
-        })
-
-        fetch(request)
+        fetch('/logout/', {
+                method: 'POST',
+                credentials: 'include'
+            })
             .then((res) => { return res.json() })
             .then((data) => {
                 location.href="/"
@@ -78,7 +69,7 @@ class Sider extends Component {
     }
 
     render() {
-        const {visible, tableData, chartData, checked} = this.props
+        const {visible, tableData, chartData, checked, tableLoading} = this.props
 
         return (
             <div id="rightWrap">
@@ -103,6 +94,11 @@ class Sider extends Component {
                                     部门视角
                                 </Link>
                             </Menu.Item>
+                            <SubMenu className="pull-right" title={<span><Icon type="user" />{ this.state.username }</span>}>
+                                <Menu.Item key="setting:1">
+                                    <div className="text-center" onClick={this.logout}>退出</div>
+                                </Menu.Item>
+                            </SubMenu>
                         </Menu>
                     </div>
                 </div>
@@ -116,6 +112,7 @@ class Sider extends Component {
                     chartData={chartData}
                     checked={checked}
                     switchFn={this.switchFn}
+                    tableLoading={tableLoading}
                 ></DetailModal>
             </div>
         )
@@ -127,7 +124,8 @@ const getData = state => {
         visible: state.update.visible,
         tableData: state.update.tableData,
         chartData: state.update.chartData,
-        checked: state.update.checked
+        checked: state.update.checked,
+        tableLoading: state.update.tableLoading
     }
 }
 
