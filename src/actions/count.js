@@ -31,12 +31,12 @@ export const setProduct = productLists => {
     }
 }
 
-export const setDepartment = departmentLists => {
+/*export const setDepartment = departmentLists => {
     return {
         type: SEARCHDEPARTMENT,
         departmentLists: departmentLists
     }
-}
+}*/
 
 export const setCenter = centerLists => {
     return {
@@ -116,7 +116,7 @@ function fetchCenter() {
 }
 
 // 获取部门下拉框数据
-export function getDepartment() {
+/*export function getDepartment() {
     return (dispatch, getState) => {
         return dispatch(fetchDepartment())
     }
@@ -133,7 +133,7 @@ function fetchDepartment() {
                 dispatch(setDepartment(data))
             })
     }
-}
+}*/
 
 // 获取弹框表格数据
 export function getTable(param, type) {

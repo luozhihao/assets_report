@@ -23,18 +23,17 @@ class DepartmentChart extends Component {
             areaView12: '',
             areaLists: [],
             centers: [],
-            departments: []
+            /*departments: []*/
         }
     }
 
     componentDidMount () {
-        this.props.getDepartment()
         this.props.getCenter()
     }
 
     // 获取图表数据
     getChart = () => {
-        const {areaView1, areaView12, departments, centers} = this.state
+        const {areaView1, areaView12, centers} = this.state
 
         fetch("/chart/department_view/", {
             method: "POST",
@@ -42,7 +41,7 @@ class DepartmentChart extends Component {
             body: JSON.stringify({ 
                 region: areaView1, 
                 area: areaView12,
-                departments: departments,
+                /*departments: departments,*/
                 centers: centers
             })
         })
@@ -55,9 +54,9 @@ class DepartmentChart extends Component {
 
     // 查询
     searchFn = () => {
-        const {centers, departments} = this.state
+        const { centers } = this.state
 
-        if (!centers.length && !departments.length) {
+        if (!centers.length) {
             message.info('请选择中心或部门')
 
             return false
@@ -84,9 +83,9 @@ class DepartmentChart extends Component {
         this.setState({centers: value})
     }
 
-    departmentChange = value => {
+    /*departmentChange = value => {
         this.setState({departments: value})
-    }
+    }*/
 
     // 显示弹框
     showView = (event, type) => {
@@ -167,8 +166,8 @@ class DepartmentChart extends Component {
     render() {
         const { getFieldProps } = this.props.form
 
-        const { departmentLists, centerLists } = this.props
-        const { departments, centers } = this.state
+        const { centerLists } = this.props
+        const { centers } = this.state
 
         return(
             <div>
@@ -205,7 +204,7 @@ class DepartmentChart extends Component {
                         </Select>
                     </FormItem>
                     <FormItem
-                        label="中心"
+                        label="中心/部门"
                     >
                         <Select 
                             {...getFieldProps('centers')}
@@ -222,7 +221,7 @@ class DepartmentChart extends Component {
                             }
                         </Select>
                     </FormItem>
-                    <FormItem
+                    {/*<FormItem
                         label="部门"
                     >
                         <Select 
@@ -239,7 +238,7 @@ class DepartmentChart extends Component {
                                 )
                             }
                         </Select>
-                    </FormItem>
+                    </FormItem>*/}
                     <FormItem>
                         <Button type="primary" onClick={this.searchFn}>查询</Button>
                     </FormItem>
@@ -267,10 +266,9 @@ DepartmentChart = Form.create()(DepartmentChart)
 
 const getData = state => {
     return {
-        departmentLists: state.update.departmentLists,
         centerLists: state.update.centerLists
     }
 }
 
-export default connect(getData, { getDepartment, getTable, getCenter })(DepartmentChart)
+export default connect(getData, { getTable, getCenter })(DepartmentChart)
 

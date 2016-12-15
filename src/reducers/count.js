@@ -5,7 +5,7 @@ const initialState = {
     visible: false,
     roomLists: [],
     productLists: [],
-    departmentLists: [],
+    /*departmentLists: [],*/
     centerLists: [],
     tableData: [],
     chartData: null,
@@ -24,9 +24,9 @@ export default function update(state = initialState, action) {
         case SEARCHPRODUCT:
             return Object.assign({}, state, { productLists: action.productLists })
             break
-        case SEARCHDEPARTMENT:
+        /*case SEARCHDEPARTMENT:
             return Object.assign({}, state, { departmentLists: action.departmentLists })
-            break
+            break*/
         case SEARCHCENTER:
             return Object.assign({}, state, { centerLists: action.centerLists })
             break
